@@ -8,8 +8,9 @@
 
 class GameLogicTest : public ::testing::Test {
 protected:
-  GameLogicTest() = default;
-  GameLogic game;
+  GameLogicTest() : board(g.get_board()) {}
+  GameLogic g{};
+  GameBoard& board;
 };
 
 static bool contains_move(const std::vector<Square>& moves, size_t file, size_t rank) {
@@ -20,21 +21,21 @@ static bool contains_move(const std::vector<Square>& moves, size_t file, size_t 
 }
 
 TEST_F(GameLogicTest, PawnMoveTest) {
-  auto b = game.get_board();
+  auto b = board;
   std::vector<MoveChange> changes{};
   MoveGenerator moves(b, changes);
-  const Position p{Rank::Rank_4, File_E,  Piece{Pawn, White}};
+  const Position p{Rank::Rank_2, File_E,  Piece{Pawn, White}};
 
   std::vector<Square> pawn_psuedo_moves = moves.generate_pseudo_legal_moves(p);
   ASSERT_EQ(pawn_psuedo_moves.size(), 2);
-  EXPECT_TRUE(contains_move(pawn_psuedo_moves, File::File_E, Rank::Rank_5));
-  EXPECT_TRUE(contains_move(pawn_psuedo_moves, File::File_E, Rank::Rank_6));
+  EXPECT_TRUE(contains_move(pawn_psuedo_moves, File::File_E, Rank::Rank_3));
+  EXPECT_TRUE(contains_move(pawn_psuedo_moves, File::File_E, Rank::Rank_4));
 }
 
 TEST_F(GameLogicTest, Pawn_BlockedForward) {
-  game.load_board("8/8/8/8/4p3/8/4P3/8");
+  board.load_board("8/8/8/8/4p3/8/4P3/8");
 
-  auto b = game.get_board();
+  auto b = board;
   std::vector<MoveChange> changes;
   MoveGenerator gen(b, changes);
 
@@ -45,9 +46,9 @@ TEST_F(GameLogicTest, Pawn_BlockedForward) {
 }
 
 TEST_F(GameLogicTest, Pawn_Captures) {
-  game.load_board("8/8/8/8/8/3p1p2/4P3/8");
+  board.load_board("8/8/8/8/8/3p1p2/4P3/8");
 
-  auto b = game.get_board();
+  auto b = board;
   std::vector<MoveChange> changes;
   MoveGenerator gen(b, changes);
 
@@ -62,9 +63,9 @@ TEST_F(GameLogicTest, Pawn_Captures) {
 }
 
 TEST_F(GameLogicTest, Pawn_EdgeFile) {
-  game.load_board("8/8/8/8/8/8/P7/8");
+  board.load_board("8/8/8/8/8/8/P7/8");
 
-  auto b = game.get_board();
+  auto b = board;
   std::vector<MoveChange> changes;
   MoveGenerator gen(b, changes);
 

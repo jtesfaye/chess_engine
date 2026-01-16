@@ -14,20 +14,23 @@ public:
   GameLogic(const GameLogic&) = delete;
   GameLogic& operator=(const GameLogic&) = delete;
 
-  inline Board& get_board() {
+  GameBoard& get_board() {
     return board;
   }
 
+  Piece at(Rank r, File f);
+
 private:
+
   void set_initial_board();
-  Piece intToPiece(u_int8_t pos);
 
   bool kingMoved;
   bool qSideRookMoved;
   bool kSideRookMoved;
 
-  Board board{};
+  GameBoard board;
   std::vector<MoveChange> move_history;
 };
+
 
 #endif

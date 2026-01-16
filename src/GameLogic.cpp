@@ -1,48 +1,46 @@
-
 #include <GameLogic.h>
 #include <util.h>
 #include <cassert>
 #include <GameTypes.h>
+#include <sstream>
 
 GameLogic::GameLogic() {
   move_history.reserve(1024);
   set_initial_board();
 }
 
-Piece GameLogic::intToPiece(u_int8_t piece) {
-  return {
-      static_cast<PieceType>(piece & 0x7),
-      static_cast<Color>(piece & 0b11000)
-    };
-}
-
 void GameLogic::set_initial_board() {
 
   for (size_t i = File_A; i <= File_H; i++) {
-    board[Rank_2][i] = piece(Color::White, PieceType::Pawn);
-    board[Rank_7][i] = piece(Color::Black, PieceType::Pawn);
+    board.set_piece(Rank_2, static_cast<File>(i), {Pawn, White});
+    board.set_piece(Rank_7, static_cast<File>(i), {Pawn, Black});
   }
-  
-  board[Rank_1][File_A] = piece(Color::White, PieceType::Rook);
-  board[Rank_1][File_H] = piece(Color::White, PieceType::Rook);
-  board[Rank_8][File_A] = piece(Color::Black, PieceType::Rook);
-  board[Rank_8][File_H] = piece(Color::Black, PieceType::Rook);
 
-  board[Rank_1][File_B] = piece(Color::White, PieceType::Knight);
-  board[Rank_1][File_G] = piece(Color::White, PieceType::Knight);
-  board[Rank_8][File_B] = piece(Color::Black, PieceType::Knight);
-  board[Rank_8][File_G] = piece(Color::Black, PieceType::Knight);
+  board.set_piece(Rank_1, File_A, {Rook, White});
+  board.set_piece(Rank_1, File_H, {Rook, White});
+  board.set_piece(Rank_8, File_A, {Rook, Black});
+  board.set_piece(Rank_8, File_H, {Rook, Black});
 
-  board[Rank_1][File_C] = piece(Color::White, PieceType::Bishop);
-  board[Rank_1][File_F] = piece(Color::White, PieceType::Bishop);
-  board[Rank_8][File_C] = piece(Color::Black, PieceType::Bishop);
-  board[Rank_8][File_F] = piece(Color::Black, PieceType::Bishop);
+  board.set_piece(Rank_1, File_B, {Knight, White});
+  board.set_piece(Rank_1, File_G, {Knight, White});
+  board.set_piece(Rank_8, File_B, {Knight, Black});
+  board.set_piece(Rank_8, File_G, {Knight, Black});
 
-  board[Rank_1][File_D] = piece(Color::White, PieceType::King);
-  board[Rank_8][File_D] = piece(Color::Black, PieceType::King);
-  board[Rank_1][File_E] = piece(Color::White, PieceType::Queen);
-  board[Rank_8][File_E] = piece(Color::Black, PieceType::Queen);
+  board.set_piece(Rank_1, File_C, {Bishop, White});
+  board.set_piece(Rank_1, File_F, {Bishop, White});
+  board.set_piece(Rank_8, File_C, {Bishop, Black});
+  board.set_piece(Rank_8, File_F, {Bishop, Black});
+
+  board.set_piece(Rank_1, File_D, {King, White});
+  board.set_piece(Rank_8, File_D, {King, Black});
+  board.set_piece(Rank_1, File_E, {Queen, White});
+  board.set_piece(Rank_8, File_E, {Queen, Black});
 }
+
+
+
+
+
 
 
 

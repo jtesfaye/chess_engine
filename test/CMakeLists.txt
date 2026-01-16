@@ -7,3 +7,7 @@ function(add_gtest test_name)
 endfunction()
 
 add_gtest(test_GameLogic ./test_GameLogic.cpp)
+add_gtest(test_pawn_move_gen ./test_pawn_move_gen.cpp)
+add_gtest(test_knight_move_gen ./test_knight_move_gen.cpp)
+add_gtest(test_sliding_move_gen test_sliding_move_gen.cpp)
+add_gtest(test_king_move_gen test_king_move_gen.cpp)

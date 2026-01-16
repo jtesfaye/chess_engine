@@ -3,6 +3,18 @@
 #include <iostream>
 #include <algorithm>
 
+template std::vector<Square>
+MoveGenerator::generate_sliding_moves<4>(
+    const std::array<MoveDir, 4>&,
+    Position
+) const;
+
+template std::vector<Square>
+MoveGenerator::generate_sliding_moves<8>(
+    const std::array<MoveDir, 8>&,
+    Position
+) const;
+
 std::vector<Square> MoveGenerator::generate_pseudo_legal_moves(Position from_square) {
 
   switch (from_square.piece.type) {
@@ -11,6 +23,18 @@ std::vector<Square> MoveGenerator::generate_pseudo_legal_moves(Position from_squ
       }
     case Knight: {
       return generate_knight_pseudo_legal_moves(from_square);
+    }
+    case Bishop: {
+      return generate_bishop_pseudo_legal_moves(from_square);
+    }
+    case Rook: {
+      return generate_rook_pseudo_legal_moves(from_square);
+    }
+    case Queen: {
+      return generate_queen_pseudo_legal_mvoes(from_square);
+    }
+    case King: {
+      return generate_king_pseudo_legal_moves(from_square);
     }
     default:
       return {};
@@ -25,18 +49,18 @@ Piece MoveGenerator::intToPiece(u_int8_t piece) {
 }
 
 std::vector<Square> MoveGenerator::generate_pawn_pseudo_legal_moves(Position move) const {
-  static std::array<MoveDir, 4> white_directions = {
-    MoveDir{MoveType::Regular, 1, 0},
-    MoveDir{MoveType::Regular, 2, 0},
-    MoveDir{MoveType::Capture, 1, 1},
-    MoveDir{MoveType::Capture, 1, -1}
+  static std::array white_directions = {
+    MoveDir{ 1, 0},
+    MoveDir{ 2, 0},
+    MoveDir{ 1, 1},
+    MoveDir{ 1, -1}
   };
 
-  static std::array<MoveDir, 4> black_directions = {
-    MoveDir{MoveType::Regular, -1, 0},
-    MoveDir{MoveType::Regular, -2, 0},
-    MoveDir{MoveType::Capture, -1, -1},
-    MoveDir{MoveType::Capture, -1, 1}
+  static std::array black_directions = {
+    MoveDir{ -1, 0},
+    MoveDir{ -2, 0},
+    MoveDir{ -1, -1},
+    MoveDir{ -1, 1}
   };
 
   std::vector<Square> moves;
@@ -47,6 +71,13 @@ std::vector<Square> MoveGenerator::generate_pawn_pseudo_legal_moves(Position mov
     });
   };
 
+  auto is_one_forward = [&] (int rd, int fd) {
+    if ((rd == 1 && fd == 0) || (rd == -1 && fd == 0)) {
+      return true;
+    }
+    return false;
+  };
+
   Rank curr_rank = move.curr_square.rank;
   File curr_file = move.curr_square.file;
   Rank starting_rank = move.piece.color == Black ? Rank_7 : Rank_2;
@@ -54,37 +85,34 @@ std::vector<Square> MoveGenerator::generate_pawn_pseudo_legal_moves(Position mov
   Color enemy_color = curr_color == White ? Black : White;
   auto dirs = curr_color == White ? white_directions : black_directions;
 
-  for (const auto&[type, rd, fd] : dirs) {
+  for (const auto&[rd, fd] : dirs) {
     int new_rank = curr_rank + rd;
     int new_file = curr_file + fd;
-    Piece newSpace = intToPiece(board[new_rank][new_file]);
-
-    if (type == Regular) {
-      if (newSpace.type != NoPiece || new_rank > Rank_8) {
-        continue;
-      }
-      if (curr_rank == starting_rank && (rd == 2 || rd == -2)) {
-        add(new_rank, new_file);
-        continue;
-      }
-      add(new_rank, new_file);
+    if (new_rank > Rank_8 || new_file > File_H || new_rank < 0 || new_file < 0) {
+      continue;
     }
-    if (type == Capture) {
-      if (newSpace.type == NoPiece) {
-        continue;
-      }
-      if (newSpace.color == enemy_color) {
-        add(new_rank, new_file);
-        continue;
-      }
-      if (!changes.empty() && canEnPassant(Position{curr_rank, curr_file, move.piece},
-          changes.back())) {
-        add(new_rank, new_file);
-      }
+
+    Piece new_space = board.at(static_cast<Rank>(new_rank), static_cast<File>(new_file));
+    if (is_one_forward(rd, fd) && new_space.type == NoPiece) {
+      add(new_rank, new_file);
+      continue;
+    }
+    if (curr_rank == starting_rank && (rd == 2 || rd == -2) && new_space.type == NoPiece) {
+      add(new_rank, new_file);
+      continue;
+    }
+    if (new_file != curr_file && new_space.color == enemy_color) {
+      add(new_rank, new_file);
+      continue;
+    }
+    if (!changes.empty() && canEnPassant(Position{curr_rank, curr_file, move.piece},changes.back())) {
+      add(new_rank, new_file);
     }
   }
   return moves;
 }
+
+
 
 bool MoveGenerator::canEnPassant(const Position current_pos, const MoveChange previous_move) {
   if (previous_move.from.piece.type != Pawn) {
@@ -122,15 +150,147 @@ bool MoveGenerator::canEnPassant(const Position current_pos, const MoveChange pr
   });
 }
 
-std::vector<Square> MoveGenerator::generate_knight_pseudo_legal_moves(Position move) {
-  static std::array white_dir = {
-    MoveDir{Regular, 1, 2},
-    MoveDir{Regular, 1, -2},
-    MoveDir{Regular, 2, 1},
-    MoveDir{Regular, 2, -1},
-    MoveDir{Regular, -1, 2},
-    MoveDir{Regular, -1, -2},
-    MoveDir{Regular, -2, 1},
-    MoveDir{Regular, -2, -1}
+std::vector<Square> MoveGenerator::generate_knight_pseudo_legal_moves(Position move) const {
+  static std::array knight_dir = {
+    MoveDir{1, 2},
+    MoveDir{ 1, -2},
+    MoveDir{ 2, 1},
+    MoveDir{ 2, -1},
+    MoveDir{ -1, 2},
+    MoveDir{ -1, -2},
+    MoveDir{ -2, 1},
+    MoveDir{-2, -1}
   };
+
+  std::vector<Square> moves;
+  auto add = [&] (int rank, int file) {
+    moves.push_back(Square{
+      static_cast<Rank>(rank),
+      static_cast<File>(file)
+    });
+  };
+
+  Rank curr_rank = move.curr_square.rank;
+  File curr_file = move.curr_square.file;
+  Color curr_color = move.piece.color;
+  Color enemy_color = curr_color == White ? Black : White;
+
+  for (const auto&[rd, fd] : knight_dir) {
+    int new_rank = curr_rank + rd;
+    int new_file = curr_file + fd;
+    if (new_rank > Rank_8 || new_file > File_H || new_rank < 0 || new_file < 0) {
+      continue;
+    }
+    Piece new_space = board.at(static_cast<Rank>(new_rank), static_cast<File>(new_file));
+    if (new_space.color == curr_color) {
+      continue;
+    }
+    if (new_space.type == NoPiece || new_space.color == enemy_color) {
+      add(new_rank, new_file);
+    }
+  }
+  return moves;
 }
+
+std::vector<Square> MoveGenerator::generate_bishop_pseudo_legal_moves(Position move) const {
+  static std::array bishop_directions = {
+    MoveDir{1, 1},
+    MoveDir {1, -1},
+    MoveDir {-1,1},
+    MoveDir {-1, -1}
+  };
+  return generate_sliding_moves(bishop_directions, move);
+}
+
+std::vector<Square> MoveGenerator::generate_rook_pseudo_legal_moves(Position move) const {
+  static std::array rook_directions = {
+    MoveDir{1, 0},
+    MoveDir {-1, 0},
+    MoveDir {0,1},
+    MoveDir {0, -1}
+  };
+  return generate_sliding_moves(rook_directions, move);
+}
+
+std::vector<Square> MoveGenerator::generate_queen_pseudo_legal_mvoes(Position move) const {
+  static std::array queen_directions = {
+    MoveDir{1, 0},
+    MoveDir {-1, 0},
+    MoveDir {0,1},
+    MoveDir {0, -1},
+    MoveDir{1, 1},
+    MoveDir {1, -1},
+    MoveDir {-1,1},
+    MoveDir {-1, -1}
+  };
+  return generate_sliding_moves(queen_directions, move);
+}
+
+std::vector<Square> MoveGenerator::generate_king_pseudo_legal_moves(Position move, bool kside_castle, bool qside_castle) const {
+  static std::array king_directions = {
+    MoveDir{1, 0},
+    MoveDir {-1, 0},
+    MoveDir {0,1},
+    MoveDir {0, -1},
+    MoveDir{1, 1},
+    MoveDir {1, -1},
+    MoveDir {-1,1},
+    MoveDir {-1, -1},
+  };
+
+  std::vector<Square> moves;
+  auto add = [&] (int rank, int file) {
+    moves.push_back(Square{
+      static_cast<Rank>(rank),
+      static_cast<File>(file)
+    });
+  };
+  Rank curr_rank = move.curr_square.rank;
+  File curr_file = move.curr_square.file;
+  Color curr_color = move.piece.color;
+  Color enemy_color = curr_color == White ? Black : White;
+
+  for (const auto&[rd, fd] : king_directions) {
+    int new_rank = curr_rank + rd;
+    int new_file = curr_file + fd;
+    if (new_rank > Rank_8 || new_file > File_H || new_rank < 0 || new_file < 0) {
+      continue;
+    }
+    Piece new_space = board.at(static_cast<Rank>(new_rank), static_cast<File>(new_file));
+    if (new_space.color == curr_color) {
+      continue;
+    }
+    if (new_space.type == NoPiece || new_space.color == enemy_color) {
+      add(new_rank, new_file);
+    }
+
+  }
+}
+
+template<size_t N>
+std::vector<Square> MoveGenerator::generate_sliding_moves(const std::array<MoveDir, N> &dirs, const Position move) const {
+  std::vector<Square> moves{};
+  Rank curr_rank = move.curr_square.rank;
+  File curr_file = move.curr_square.file;
+  Color enemy_color = move.piece.color == White ? Black : White;
+
+  for (const auto& [rank_dir, file_dir] : dirs) {
+    int new_rank  = curr_rank + rank_dir;
+    int new_file = curr_file + file_dir;
+    while (new_rank >= Rank_1 && new_rank <= Rank_8 && new_file >= File_A && new_file <= File_H) {
+      Piece p = board.at(static_cast<Rank>(new_rank), static_cast<File>(new_file));
+      if (p.type == NoPiece) {
+        moves.push_back({static_cast<Rank>(new_rank), static_cast<File>(new_file)});
+      } else {
+        if (p.color == enemy_color) {
+          moves.push_back({static_cast<Rank>(new_rank), static_cast<File>(new_file)});
+        }
+        break;
+      }
+      new_rank += rank_dir;
+      new_file += file_dir;
+    }
+  }
+  return moves;
+}
+
