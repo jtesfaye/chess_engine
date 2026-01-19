@@ -49,26 +49,25 @@ struct MoveDir {
 struct Piece {
     PieceType type;
     Color color;
-};
-
-struct Position {
-    Square curr_square;
-    Piece piece;
+    Square position;
 };
 
 struct MoveChange {
-    Position from;
-    Position to;
+    Piece from;
+    Piece to;
 };
 
 class GameBoard {
   Board board{};
 public:
+
   Piece at(const Rank r, const File f) const;
-  void set_piece(const Rank r, const File f, const Piece p);
-  void load_board(std::string fen);
+  void set_piece(Piece pos);
+  void undo_piece(Rank r, File f, Piece p);
+
+  std::vector<Piece> load_from_fen_piece_placement(std::string fen);
   static Piece intToPiece(u_int8_t pos);
-  static u_int8_t char_to_piece(char c);
+  Piece char_to_piece(char c, Rank r, File f);
   std::string to_fen_piece_placement() const;
 
 };

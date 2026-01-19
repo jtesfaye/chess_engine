@@ -3,6 +3,7 @@
 //
 
 #include <GameTypes.h>
+#include <cassert>
 
 Piece GameBoard::at(const Rank r, const File f) const {
   u_int8_t piece = board[r][f];
@@ -12,14 +13,15 @@ Piece GameBoard::at(const Rank r, const File f) const {
   };
 };
 
-void GameBoard::set_piece(const Rank r, const File f, const Piece p) {
-  board[r][f] = piece(p.color, p.type);
+void GameBoard::set_piece(const Piece p) {
+  board[p.position.rank][p.position.file] = piece(p.color, p.type);
 }
 
-void GameBoard::load_board(std::string fen) {
+std::vector<Piece> GameBoard::load_from_fen_piece_placement(std::string fen) {
   std::memset(board.data(), 0, sizeof(board));
   std::stringstream b{fen};
   std::vector<std::string> ranks;
+  std::vector<Piece> piece_list;
   std::string r;
   while (std::getline(b, r, '/')) {
     ranks.push_back(std::move(r));
@@ -32,11 +34,13 @@ void GameBoard::load_board(std::string fen) {
       if (isdigit(c)) {
         pos += c - '0';
       } else {
-        board[i][pos] = char_to_piece(c);
+        piece_list.emplace_back(char_to_piece(c, static_cast<Rank>(i), static_cast<File>(pos)));
+        set_piece(piece_list.back());
         ++ pos;
       }
     }
   }
+  return piece_list;
 }
 
 Piece GameBoard::intToPiece(u_int8_t pos) {
@@ -86,33 +90,38 @@ std::string GameBoard::to_fen_piece_placement() const {
   return out.str();
 }
 
-u_int8_t GameBoard::char_to_piece(char c) {
+Piece GameBoard::char_to_piece(char c, Rank r, File f) {
+  Square s{r, f};
   switch (c) {
     case 'r':
-      return piece(Black, Rook);
+      return {Rook, Black, s};
     case 'n':
-      return piece(Black, Knight);
+      return {Knight, Black, s};
     case 'b':
-      return piece(Black, Bishop);
+      return {Bishop, Black, s};
     case 'k':
-      return piece(Black, King);
+      return {King, Black, s};
     case 'q':
-      return piece(Black, Queen);
+      return {Queen, Black, s};
     case 'p':
-      return piece(Black, Pawn);
+      return {Pawn, Black, s};
     case 'R':
-      return piece(White, Rook);
+      return {Rook, White, s};
     case 'N':
-      return piece(White, Knight);
+      return {Knight, White, s};
     case 'B':
-      return piece(White, Bishop);
+      return {Bishop, White, s};
     case 'K':
-      return piece(White, King);
+      return {King, White, s};
     case 'Q':
-      return piece(White, Queen);
+      return {Queen, White, s};
     case 'P':
-      return piece(White, Pawn);
+      return {Pawn, White, s};
     default:
-      return 0;
+      return {NoPiece, NoColor, s};
   }
+}
+
+void GameBoard::undo_piece(Rank r, File f, Piece p) {
+  board[r][f] = 0;
 }
