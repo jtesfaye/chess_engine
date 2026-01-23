@@ -17,30 +17,46 @@ public:
   ChessGame(const ChessGame&) = delete;
   ChessGame& operator=(const ChessGame&) = delete;
 
-  GameBoard& get_board() {
-    return board;
-  }
+  void apply_move(Move move);
+  std::vector<Move> generate_legal_moves(Piece p, Square s);
+  const std::vector<std::pair<Piece, Square>>& get_piece_list();
+  bool is_check() const;
+  void undo_move();
 
-  bool is_check(const GameBoard& board, const std::vector<Piece>& list, Color curr_turn) const;
 
 private:
-
+  GameBoard board;
   MoveGenerator move_gen;
-  void set_initial_board();
-  //bool is_legal_move(MoveChange move);
+  bool is_legal_move(Piece p, Square from, Square to);
+
+  void promote_piece(PieceType promote_to, Square s);
+  bool can_enpassant(Piece pos, Square s) const;
+  bool can_promote(Piece pos, Square s) const;
+  void update_en_passant_square(Square last_pawn_move);
+  void do_en_passant_capture();
+
   void set_castling_from_fen(std::string_view f);
+  std::vector<Move> get_castling_squares(Square king_pos);
+  std::array<Move, 4> get_promotion_moves(Square from, Square to);
+  bool check_castle_space(Square king_pos, bool k_side);
+  void move_rook(const Move &move);
+  void update_castling_rights(Piece p, Square s);
 
   Color current_turn{White};
-  bool king_moved_w {false};
-  bool king_moved_b {false};
-  bool q_rook_white {false};
-  bool k_rook_white {false};
-  bool q_rook_black {false};
-  bool k_rook_black {false};
 
-  GameBoard board;
-  std::vector<MoveChange> move_history;
-  std::vector<Piece> piece_list;
+  bool king_moved_w {false};
+  bool q_rook_white_moved {false};
+  bool k_rook_white_moved {false};
+
+  bool king_moved_b {false};
+  bool q_rook_black_moved {false};
+  bool k_rook_black_moved {false};
+
+  Square en_passant_target_square;
+  bool passant_sqr_exists{false};
+
+  std::vector<Move> move_history;
+  std::vector<Position>& piece_list;
   size_t half_move_clock{};
   size_t full_moves{1};
 };

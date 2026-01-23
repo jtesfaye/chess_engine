@@ -11,7 +11,6 @@
 using Board = std::array<std::array<u_int8_t, 8>, 8>;
 
 
-
 enum PieceType : uint8_t {
   NoPiece, Pawn, Knight, Bishop, Rook, Queen, King
 };
@@ -47,29 +46,60 @@ struct MoveDir {
 };
 
 struct Piece {
-    PieceType type;
-    Color color;
-    Square position;
+  PieceType type;
+  Color color;
+};
+
+struct Move {
+  Square from;
+  Square to;
+  bool is_en_passant{false};
+  bool is_k_castle{false};
+  bool is_q_castle{false};
+  bool needs_pawn_promotion {false};
+  PieceType promote_to {NoPiece};
+
+  bool is_castling() const {
+    return is_k_castle || is_q_castle;
+  }
 };
 
 struct MoveChange {
-    Piece from;
-    Piece to;
+  Move move;
+  Piece was_captured{NoPiece, NoColor};
 };
+
+using Position = std::pair<Piece, Square>;
 
 class GameBoard {
   Board board{};
 public:
 
-  Piece at(const Rank r, const File f) const;
-  void set_piece(Piece pos);
-  void undo_piece(Rank r, File f, Piece p);
+  GameBoard();
+  GameBoard(std::string fen_str);
+  Piece at(Rank r, File f) const;
+  Piece at(Square s) const;
 
-  std::vector<Piece> load_from_fen_piece_placement(std::string fen);
+  bool move_piece(Piece p, Square from, Square to);
+  bool undo_last_move();
+  static bool is_inbound(int r, int f);
+
   static Piece intToPiece(u_int8_t pos);
-  Piece char_to_piece(char c, Rank r, File f);
+  Piece char_to_piece(char c);
   std::string to_fen_piece_placement() const;
+  std::vector<Position>& get_piece_list();
+  bool set_piece(Piece p, Square s);
+  bool remove_piece(Square s);
 
+
+private:
+
+  bool remove_from_piece_list(Square s);
+  std::vector<std::pair<Piece, Square>> load_from_fen_piece_placement(std::string fen);
+  void set_initial_board();
+  bool is_capture(Piece p, Square to_squre);
+  std::vector<Position> piece_list;
+  std::vector<MoveChange> move_history;
 };
 
 #endif
