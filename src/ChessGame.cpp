@@ -86,7 +86,12 @@ void ChessGame::apply_move(Move move) {
       promote_piece(move.promote_to, move.to);
     }
   }
-  current_turn = White == current_turn ? Black : White;
+  if (current_turn == Black) {
+    full_moves += 1;
+    current_turn = White;
+  } else {
+    current_turn = Black;
+  }
 }
 
 void ChessGame::undo_move() {
@@ -215,6 +220,12 @@ bool ChessGame::can_enpassant(Piece piece, Square current_pos) const {
   assert(passant_sqr_exists);
   assert(piece.type == Pawn);
   int dir = piece.color == White ? -1 : 1;
+  if (piece.color == White && current_pos.rank != Rank_5) {
+    return false;
+  }
+  if (piece.color == Black && current_pos.rank != Rank_4) {
+    return false;
+  }
   if (en_passant_target_square.rank + dir  != current_pos.rank) {
     return false;
   }
@@ -298,8 +309,8 @@ bool ChessGame::check_castle_space(Square king_pos, bool k_side) {
       Square{k_rank, static_cast<File>(k_file + 1)},
       Square{k_rank, static_cast<File>(k_file + 2)}
     };
-    return std::ranges::any_of(squares, [&, this] (const Square& sqr) {
-      return board.at(sqr.rank, sqr.file).type != NoPiece;
+    return std::ranges::all_of(squares, [&, this] (const Square& sqr) {
+      return board.at(sqr.rank, sqr.file).type == NoPiece;
     });
   } else {
     std::array squares = {
@@ -307,8 +318,8 @@ bool ChessGame::check_castle_space(Square king_pos, bool k_side) {
       Square{k_rank, static_cast<File>(k_file - 2)},
       Square{k_rank, static_cast<File>(k_file - 3)}
     };
-    return std::ranges::any_of(squares, [&, this] (const Square& sqr) {
-      return !board.at(sqr.rank, sqr.file).type == NoPiece;
+    return std::ranges::all_of(squares, [&, this] (const Square& sqr) {
+      return board.at(sqr.rank, sqr.file).type == NoPiece;
     });
   }
   return false;
@@ -366,8 +377,8 @@ void ChessGame::move_rook(const Move &kings_move) {
 
 void ChessGame::do_en_passant_capture() {
   assert(passant_sqr_exists);
-  int cap_dir = current_turn == White ? -1 : 1;
-  Square enemy_squre{static_cast<Rank>(en_passant_target_square.rank + cap_dir), en_passant_target_square.file};
+  int rank_dir = current_turn == White ? -1 : 1;
+  Square enemy_squre{static_cast<Rank>(en_passant_target_square.rank + rank_dir), en_passant_target_square.file};
   Piece p = board.at(enemy_squre.rank, enemy_squre.file);
   assert(p.type == Pawn && p.color != current_turn);
   board.remove_piece(enemy_squre);
