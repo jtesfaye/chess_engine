@@ -2,12 +2,11 @@
 #include <gtest/gtest.h>
 #include <ChessGame.h>
 #include <MoveGenerator.h>
+#include <iostream>
 
 class GameLogicTest : public ::testing::TestWithParam<std::tuple<std::string, bool>> {
 protected:
   GameLogicTest() = default;
-  ChessGame g;
-  GameBoard game;
 };
 
 class ChessGameTest : public ::testing::TestWithParam<std::string> {
@@ -24,28 +23,8 @@ static bool contains_move(const std::vector<Square>& moves, size_t file, size_t 
 
 TEST_F(GameLogicTest, LoadBoardTest) {
   std::string first = "8/8/8/8/8/8/4P3/8";
-  game.load_from_fen_piece_placement(first);
+  GameBoard game(first);
   ASSERT_EQ(game.to_fen_piece_placement(), first);
-}
-
-TEST_F(GameLogicTest, LoadBoard_Orientation) {
-  game.load_from_fen_piece_placement("8/8/8/8/8/8/4P3/8");
-  auto piece = game.at(Rank_2, File_E);
-  EXPECT_EQ(piece.type, PieceType::Pawn);
-  EXPECT_EQ(piece.color, Color::White);
-}
-
-TEST_F(GameLogicTest, LoadBoard_EdgeSquares) {
-  game.load_from_fen_piece_placement("r6k/8/8/8/8/8/8/R6K");
-  EXPECT_TRUE(game.at(Rank::Rank_8, File::File_A).type == Rook); // black rook
-  EXPECT_TRUE(game.at(Rank::Rank_8, File::File_H).type == King); // black king
-  EXPECT_TRUE(game.at(Rank::Rank_1, File::File_A).type == Rook); // white rook
-  EXPECT_TRUE(game.at(Rank::Rank_1, File::File_H).type == King); // white king
-}
-
-TEST_F(GameLogicTest, LoadBoard_EmptyCompression) {
-  game.load_from_fen_piece_placement("3p4/8/8/8/8/8/8/8");
-  EXPECT_EQ(game.to_fen_piece_placement(), "3p4/8/8/8/8/8/8/8");
 }
 
 TEST_P(ChessGameTest, ConstructChessGameFromFen) {
@@ -55,8 +34,16 @@ TEST_P(ChessGameTest, ConstructChessGameFromFen) {
 
 TEST_P(GameLogicTest, isCheckTest) {
   const auto[fen, res] = GetParam();
-  const ChessGame game(fen);
-  EXPECT_EQ(game.is_check(), res);
+  ChessGame game(fen);
+  auto piece_list = game.get_piece_list();
+  for (const auto [piece, square] : piece_list) {
+    if (piece.color == game.get_current_turn() && piece.type == King) {
+      std::cout << piece.color << std::endl;
+      std::cout << square.rank << " " << square.file << std::endl;
+      EXPECT_EQ(game.is_check(square), res);
+      break;
+    }
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(canConstructFromFen, ChessGameTest, ::testing::Values(

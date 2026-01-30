@@ -83,8 +83,12 @@ std::vector<Square> MoveGenerator::generate_pawn_pseudo_legal_moves(Piece p, Squ
       add(new_rank, new_file);
       continue;
     }
-    if (curr_rank == starting_rank && (rd == 2 || rd == -2) && new_space.type == NoPiece) {
-      add(new_rank, new_file);
+    if (curr_rank == starting_rank && (rd == 2 || rd == -2)) {
+      int mid_rank = curr_rank + (rd / 2);
+      if (board.at(static_cast<Rank>(mid_rank), curr_file).type == NoPiece &&
+          new_space.type == NoPiece) {
+        add(new_rank, new_file);
+          }
       continue;
     }
     if (new_file != curr_file && new_space.color == enemy_color) {
